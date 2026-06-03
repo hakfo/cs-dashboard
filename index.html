@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -47,8 +48,29 @@
   .chip.active{background:var(--accent);border-color:var(--accent);color:#04121f;font-weight:600}
   .chip .cdot{width:8px;height:8px;border-radius:50%}
   .chip .cnt{font-size:11px;opacity:.8}
-  main{max-width:1320px;margin:0 auto;padding:22px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+  main{max-width:none;margin:0 auto;padding:22px clamp(16px,3vw,44px)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  /* ---- Statistieken-/grafiekpaneel ---- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-bottom:20px}
+  .statcard{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+    border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px}
+  .statcard h4{margin:0 0 13px;font-size:12px;color:var(--muted);font-weight:600;
+    text-transform:uppercase;letter-spacing:.5px}
+  .kpis{display:flex;gap:10px}
+  .kpi{flex:1;text-align:center;background:var(--panel2);border:1px solid var(--border);border-radius:11px;padding:12px 6px}
+  .kpi .num{font-size:25px;font-weight:700;line-height:1}
+  .kpi .lbl{font-size:10px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:.3px}
+  .kpi.crit .num{color:var(--crit)} .kpi.cve .num{color:var(--accent)} .kpi.new .num{color:var(--new)}
+  .barrow{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .barrow .bl{width:115px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+  .bartrack{flex:1;height:9px;background:var(--panel2);border-radius:6px;overflow:hidden}
+  .barfill{height:100%;border-radius:6px;transition:width .6s ease}
+  .barrow .bv{width:26px;text-align:right;color:var(--text);font-weight:600;font-size:11.5px}
+  .spark{display:flex;align-items:flex-end;gap:6px;height:90px;padding-top:18px}
+  .spark .sb{flex:1;background:linear-gradient(180deg,#3ea6ff,#7b5cff);border-radius:5px 5px 0 0;min-height:3px;position:relative;transition:height .6s ease}
+  .spark .sb span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:10.5px;color:var(--muted)}
+  .axis{display:flex;gap:6px;margin-top:6px}
+  .axis div{flex:1;text-align:center;font-size:10px;color:var(--muted);text-transform:capitalize}
   .card{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
     border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 14px;
     display:flex;flex-direction:column;gap:9px;position:relative;overflow:hidden;
@@ -69,6 +91,17 @@
     border:1px solid var(--border);color:var(--muted)}
   .tag.crit{background:rgba(255,71,87,.15);border-color:rgba(255,71,87,.4);color:#ff8794}
   .tag.new{background:rgba(62,166,255,.15);border-color:rgba(62,166,255,.4);color:#8fd0ff}
+  .tag.cve{background:rgba(62,166,255,.15);border-color:rgba(62,166,255,.45);color:#8fd0ff;text-decoration:none;cursor:pointer}
+  .tag.cve:hover{background:rgba(62,166,255,.32);color:#cfe8ff}
+  .mit{font-size:11.5px;color:#9fe6c0;background:rgba(46,213,115,.1);border:1px solid rgba(46,213,115,.3);
+    border-radius:9px;padding:7px 10px;line-height:1.45;display:flex;gap:7px;align-items:flex-start}
+  .mit b{color:#2ed573;flex-shrink:0;white-space:nowrap}
+  .card.watch{border-color:rgba(255,193,7,.5);box-shadow:0 0 0 1px rgba(255,193,7,.12)}
+  .card.watch:hover{box-shadow:var(--shadow),0 0 0 1px rgba(255,193,7,.25)}
+  .tag.watch{background:var(--vc,#ffc107);border:0;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .kpi.watch .num{color:#ffc107}
+  .kpis{flex-wrap:wrap}
+  .kpi{min-width:62px}
   .empty{text-align:center;padding:70px 20px;color:var(--muted)}
   .empty .big{font-size:46px;margin-bottom:10px}
   .skeleton{height:150px;border-radius:var(--radius);background:linear-gradient(90deg,var(--panel) 25%,var(--panel2) 50%,var(--panel) 75%);
@@ -92,7 +125,7 @@
       <div class="logo">&#128737;</div>
       <div>
         <h1>Cybersecurity Threat Dashboard</h1>
-        <div class="sub">Live nieuws &amp; kwetsbaarheden &middot;</div>
+        <div class="sub">Live nieuws &amp; kwetsbaarheden &middot; Realtime threat intelligence</div>
       </div>
     </div>
     <div class="status">
@@ -111,11 +144,13 @@
   <div class="controls">
     <input class="search" id="search" placeholder="&#128269;  Zoek op trefwoord, bedrijf, CVE-nummer&hellip;">
     <select id="sort">
+      <option value="watch" selected>Onze stack eerst</option>
       <option value="date">Nieuwste eerst</option>
       <option value="crit">Kritiek eerst</option>
       <option value="source">Op bron</option>
     </select>
     <label class="chip" style="cursor:pointer"><input type="checkbox" id="critonly" style="accent-color:var(--crit)"> Alleen kritiek</label>
+    <label class="chip" style="cursor:pointer"><input type="checkbox" id="watchonly" style="accent-color:#ffc107"> &#11088; Alleen onze stack</label>
   </div>
   <div class="chips" id="chips"></div>
   <div class="quicklinks">
@@ -129,6 +164,7 @@
 </header>
 
 <main>
+  <div class="stats" id="stats"></div>
   <div class="grid" id="grid"></div>
   <div class="empty" id="empty" style="display:none">
     <div class="big">&#128269;</div>
@@ -220,13 +256,27 @@ function isCrit(item){
   return CRIT_WORDS.some(w=>s.includes(w));
 }
 
+/* ---------- Vendor-watchlist (eigen tech-stack) ----------
+   Pas deze lijst aan met jullie eigen producten. Items die een van
+   deze termen noemen krijgen een sterren-badge en komen bovenaan. */
+const WATCHLIST=[
+  {name:'Microsoft', color:'#0a7cff', words:['microsoft','windows','azure','entra','active directory','exchange','sharepoint','outlook','office 365','microsoft 365','m365','defender','intune','sccm','hyper-v','sql server','powershell','onedrive','bitlocker','microsoft teams','sentinel','dynamics 365','.net','asp.net']},
+  {name:'Fortinet', color:'#ee3124', words:['fortinet','fortigate','fortios','fortimanager','fortiweb','fortiproxy','forticlient','fortinac','fortianalyzer','fortisiem']},
+  {name:'Citrix', color:'#7c3aed', words:['citrix','netscaler','xenapp','xendesktop','citrix adc','citrixbleed','citrix bleed']},
+  {name:'Cisco', color:'#0d8bd9', words:['cisco','ios xe','ios-xe','firepower','anyconnect','webex','meraki','catalyst','nx-os','secure client','adaptive security appliance','snort']},
+];
+function vendorHits(item){
+  const s=(item.title+' '+item.desc).toLowerCase();
+  return WATCHLIST.filter(v=>v.words.some(w=>s.includes(w)));
+}
+
 async function loadAll(){
   document.getElementById('livedot').style.background='var(--warn)';
   grid.innerHTML = Array(6).fill('<div class="skeleton"></div>').join('');
   const results = await Promise.all(FEEDS.map(fetchFeed));
   let items=[]; const failed=[];
   results.forEach((arr,i)=>{ if(arr.length) items=items.concat(arr); else failed.push(FEEDS[i].name); });
-  items.forEach(it=>{ it.crit=isCrit(it); it.isNew = it.ts > LAST_VISIT; });
+  items.forEach(it=>{ it.crit=isCrit(it); it.isNew = it.ts > LAST_VISIT; it.vendors=vendorHits(it); it.watch=it.vendors.length>0; });
   ALL = items;
   document.getElementById('updated').textContent = new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('livedot').style.background = failed.length===FEEDS.length ? 'var(--crit)' : 'var(--ok)';
@@ -235,7 +285,7 @@ async function loadAll(){
     banner.innerHTML = '&#9888; Tijdelijk geen data van: <b>'+failed.join(', ')+'</b>. '+
       'De overige bronnen zijn geladen. Probeer "Nu verversen" als dit aanhoudt.';
   } else { banner.classList.remove('show'); }
-  buildChips(); render();
+  buildChips(); render(); renderStats();
   localStorage.setItem('cyber_lastvisit', Date.now());
   resetTimer();
 }
@@ -256,14 +306,17 @@ function buildChips(){
 function render(){
   const q=document.getElementById('search').value.toLowerCase().trim();
   const critOnly=document.getElementById('critonly').checked;
+  const watchOnly=document.getElementById('watchonly').checked;
   const sort=document.getElementById('sort').value;
   let list=ALL.filter(it=>{
     if(activeSource!=='all' && it.feed.name!==activeSource) return false;
     if(critOnly && !it.crit) return false;
+    if(watchOnly && !it.watch) return false;
     if(q && !(it.title+' '+it.desc).toLowerCase().includes(q)) return false;
     return true;
   });
-  if(sort==='date') list.sort((a,b)=>b.ts-a.ts);
+  if(sort==='watch') list.sort((a,b)=> ((b.watch?1:0)-(a.watch?1:0)) || (b.crit-a.crit) || (b.ts-a.ts));
+  else if(sort==='date') list.sort((a,b)=>b.ts-a.ts);
   else if(sort==='crit') list.sort((a,b)=> (b.crit-a.crit) || (b.ts-a.ts));
   else if(sort==='source') list.sort((a,b)=> a.feed.name.localeCompare(b.feed.name) || b.ts-a.ts);
 
@@ -271,6 +324,61 @@ function render(){
   emptyEl.style.display = list.length? 'none':'block';
   grid.style.display = list.length? 'grid':'none';
   grid.innerHTML = list.map(card).join('');
+}
+
+/* ---------- Mitigatie-extractie ----------
+   Haalt alleen een mitigatie-zin uit de brontekst als die er staat
+   (patch / update / workaround / fixed in ...). Verzint nooit iets. */
+const MIT_WORDS=/\b(patch(?:ed|es)?|hotfix|security update|software update|update(?:n|d| to| now)|upgrade(?:n| to)?|bijwerken|beveiligingsupdate|fixed in|fix(?: is)? available|fix released|workaround|mitigat|install the update|apply the (?:patch|update))\b/i;
+function mitigation(it){
+  const text=it.desc||'';
+  const parts=text.match(/[^.!?]+[.!?]*/g)||[];
+  for(const p of parts){ if(MIT_WORDS.test(p)) return p.trim().replace(/\s+/g,' ').slice(0,180); }
+  return '';
+}
+
+/* ---------- Statistieken / grafieken ---------- */
+function renderStats(){
+  const el=document.getElementById('stats');
+  if(!ALL.length){ el.innerHTML=''; return; }
+  const total=ALL.length;
+  const critN=ALL.filter(i=>i.crit).length;
+  const cveN=ALL.filter(i=>/CVE-\d{4}-\d{3,7}/i.test(i.title+' '+i.desc)).length;
+  const newN=ALL.filter(i=>i.isNew).length;
+  const watchN=ALL.filter(i=>i.watch).length;
+
+  const cnt={}; ALL.forEach(i=>cnt[i.feed.name]=(cnt[i.feed.name]||0)+1);
+  const maxc=Math.max(...Object.values(cnt),1);
+  const bars=FEEDS.map(f=>{
+    const v=cnt[f.name]||0;
+    return `<div class="barrow"><span class="bl">${esc(f.name)}</span>`+
+      `<span class="bartrack"><span class="barfill" style="width:${v/maxc*100}%;background:${f.color}"></span></span>`+
+      `<span class="bv">${v}</span></div>`;
+  }).join('');
+
+  const days=[]; const now=new Date();
+  for(let d=6;d>=0;d--){
+    const dt=new Date(now); dt.setDate(now.getDate()-d); dt.setHours(0,0,0,0);
+    days.push({start:dt.getTime(), label:dt.toLocaleDateString('nl-NL',{weekday:'short'}), n:0});
+  }
+  ALL.forEach(i=>{
+    for(let k=days.length-1;k>=0;k--){ if(i.ts>=days[k].start){ days[k].n++; break; } }
+  });
+  const maxd=Math.max(...days.map(d=>d.n),1);
+  const spark=days.map(d=>`<div class="sb" style="height:${Math.max(d.n/maxd*100,3)}%"><span>${d.n||''}</span></div>`).join('');
+  const axis=days.map(d=>`<div>${d.label}</div>`).join('');
+
+  el.innerHTML=
+    `<div class="statcard"><h4>&#128202; Overzicht</h4><div class="kpis">`+
+      `<div class="kpi"><div class="num">${total}</div><div class="lbl">Items</div></div>`+
+      `<div class="kpi crit"><div class="num">${critN}</div><div class="lbl">Kritiek</div></div>`+
+      `<div class="kpi cve"><div class="num">${cveN}</div><div class="lbl">Met CVE</div></div>`+
+      `<div class="kpi watch"><div class="num">${watchN}</div><div class="lbl">Onze stack</div></div>`+
+      `<div class="kpi new"><div class="num">${newN}</div><div class="lbl">Nieuw</div></div>`+
+    `</div></div>`+
+    `<div class="statcard"><h4>&#128225; Items per bron</h4>${bars}</div>`+
+    `<div class="statcard"><h4>&#128197; Activiteit laatste 7 dagen</h4>`+
+      `<div class="spark">${spark}</div><div class="axis">${axis}</div></div>`;
 }
 
 function timeAgo(ts){
@@ -285,9 +393,12 @@ function card(it){
   const tags=[];
   if(it.crit) tags.push('<span class="tag crit">&#9888; KRITIEK</span>');
   if(it.isNew) tags.push('<span class="tag new">&#10024; NIEUW</span>');
-  const cve=(it.title+' '+it.desc).match(/CVE-\d{4}-\d{3,7}/i);
-  if(cve) tags.push('<span class="tag">'+cve[0].toUpperCase()+'</span>');
-  return `<article class="card ${it.crit?'crit':''}">
+  const cves=[...new Set((it.title+' '+it.desc).toUpperCase().match(/CVE-\d{4}-\d{3,7}/g)||[])];
+  cves.slice(0,4).forEach(c=>tags.push(
+    `<a class="tag cve" href="https://nvd.nist.gov/vuln/detail/${c}" target="_blank" rel="noopener" title="Bekijk ${c} op NVD &ndash; CVSS-score &amp; details">${c} &#8599;</a>`));
+  const mit = cves.length ? mitigation(it) : '';
+  const watchTags=(it.vendors||[]).map(v=>`<span class="tag watch" style="--vc:${v.color}">&#11088; ${esc(v.name)}</span>`).join('');
+  return `<article class="card ${it.crit?'crit':''} ${it.watch?'watch':''}">
     <div class="bar" style="background:${it.feed.color}"></div>
     <div class="meta">
       <span class="src" style="background:${it.feed.color}">${esc(it.feed.name)}</span>
@@ -295,7 +406,8 @@ function card(it){
     </div>
     <h3 class="ttl"><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></h3>
     ${it.desc?`<p class="desc">${esc(it.desc)}</p>`:''}
-    <div class="tags">${tags.join('')}</div>
+    ${mit?`<div class="mit"><b>&#128736; Mitigatie</b><span>${esc(mit)}</span></div>`:''}
+    <div class="tags">${watchTags}${tags.join('')}</div>
   </article>`;
 }
 
@@ -316,6 +428,7 @@ document.getElementById('refresh').onclick=loadAll;
 document.getElementById('search').oninput=render;
 document.getElementById('sort').onchange=render;
 document.getElementById('critonly').onchange=render;
+document.getElementById('watchonly').onchange=render;
 document.getElementById('interval').onchange=resetTimer;
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) loadAll(); });
 
