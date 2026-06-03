@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cybersecurity Threat Dashboard</title>
+<style>
+  :root{
+    --bg:#0b0f1a; --panel:#131a2a; --panel2:#1a2235; --border:#26304a;
+    --text:#e6ecf5; --muted:#8a97b0; --accent:#3ea6ff; --crit:#ff4757;
+    --ok:#2ed573; --warn:#ffa502; --new:#3ea6ff;
+    --radius:14px; --shadow:0 4px 20px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#16213c 0%,var(--bg) 55%);
+    color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh}
+  header{position:sticky;top:0;z-index:20;background:rgba(11,15,26,.85);
+    backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 22px}
+  .top{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+    background:linear-gradient(135deg,#3ea6ff,#7b5cff);font-size:22px;box-shadow:var(--shadow)}
+  h1{font-size:19px;margin:0;letter-spacing:.3px}
+  .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .status{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);
+    display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .pill{background:var(--panel2);border:1px solid var(--border);padding:6px 11px;border-radius:20px;color:var(--muted)}
+  .pill b{color:var(--text)}
+  button,select{font-family:inherit;cursor:pointer}
+  .btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    padding:7px 13px;border-radius:10px;font-size:13px;transition:.15s}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:linear-gradient(135deg,#3ea6ff,#7b5cff);border:0;color:#fff;font-weight:600}
+  .btn.primary:hover{filter:brightness(1.1)}
+  .controls{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .search{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--border);
+    border-radius:11px;padding:9px 13px;color:var(--text);font-size:14px}
+  .search:focus{outline:0;border-color:var(--accent)}
+  select{background:var(--panel);border:1px solid var(--border);color:var(--text);
+    padding:9px 11px;border-radius:11px;font-size:13px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{background:var(--panel);border:1px solid var(--border);color:var(--muted);
+    padding:6px 13px;border-radius:20px;font-size:12.5px;transition:.15s;display:flex;align-items:center;gap:7px}
+  .chip:hover{color:var(--text)}
+  .chip.active{background:var(--accent);border-color:var(--accent);color:#04121f;font-weight:600}
+  .chip .cdot{width:8px;height:8px;border-radius:50%}
+  .chip .cnt{font-size:11px;opacity:.8}
+  main{max-width:1320px;margin:0 auto;padding:22px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+  .card{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+    border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 14px;
+    display:flex;flex-direction:column;gap:9px;position:relative;overflow:hidden;
+    transition:.18s;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .card:hover{transform:translateY(-3px);border-color:#374566;box-shadow:var(--shadow)}
+  .card .bar{position:absolute;left:0;top:0;bottom:0;width:4px}
+  .card.crit{border-color:rgba(255,71,87,.5)}
+  .meta{display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+  .src{font-weight:600;padding:3px 9px;border-radius:7px;font-size:11px;color:#04121f}
+  .ttl{font-size:15px;font-weight:600;line-height:1.35;margin:0}
+  .ttl a{color:var(--text);text-decoration:none}
+  .ttl a:hover{color:var(--accent)}
+  .desc{font-size:13px;color:var(--muted);line-height:1.5;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+  .tag{font-size:10.5px;padding:3px 8px;border-radius:6px;background:var(--panel2);
+    border:1px solid var(--border);color:var(--muted)}
+  .tag.crit{background:rgba(255,71,87,.15);border-color:rgba(255,71,87,.4);color:#ff8794}
+  .tag.new{background:rgba(62,166,255,.15);border-color:rgba(62,166,255,.4);color:#8fd0ff}
+  .empty{text-align:center;padding:70px 20px;color:var(--muted)}
+  .empty .big{font-size:46px;margin-bottom:10px}
+  .skeleton{height:150px;border-radius:var(--radius);background:linear-gradient(90deg,var(--panel) 25%,var(--panel2) 50%,var(--panel) 75%);
+    background-size:200% 100%;animation:sh 1.3s infinite}
+  @keyframes sh{from{background-position:200% 0}to{background-position:-200% 0}}
+  .quicklinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .ql{font-size:11.5px;color:var(--muted);text-decoration:none;border:1px dashed var(--border);
+    padding:5px 11px;border-radius:9px}
+  .ql:hover{color:var(--accent);border-color:var(--accent)}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
+  .bannermsg{background:rgba(255,165,2,.12);border:1px solid rgba(255,165,2,.35);
+    color:#ffce7a;padding:10px 14px;border-radius:11px;font-size:12.5px;margin-top:12px;display:none}
+  .bannermsg.show{display:block}
+  @media(max-width:600px){.status{width:100%;margin-left:0}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">
+      <div class="logo">&#128737;</div>
+      <div>
+        <h1>Cybersecurity Threat Dashboard</h1>
+        <div class="sub">Live nieuws &amp; kwetsbaarheden &middot; Fellowmind Security Team</div>
+      </div>
+    </div>
+    <div class="status">
+      <span class="pill"><span class="dot" id="livedot"></span><b id="itemcount">0</b> items</span>
+      <span class="pill">Bijgewerkt: <b id="updated">&mdash;</b></span>
+      <span class="pill">Auto-refresh in <b id="countdown">&mdash;</b></span>
+      <select id="interval" title="Ververs-interval">
+        <option value="300">5 min</option>
+        <option value="900" selected>15 min</option>
+        <option value="1800">30 min</option>
+        <option value="3600">1 uur</option>
+      </select>
+      <button class="btn primary" id="refresh">&#8635; Nu verversen</button>
+    </div>
+  </div>
+  <div class="controls">
+    <input class="search" id="search" placeholder="&#128269;  Zoek op trefwoord, bedrijf, CVE-nummer&hellip;">
+    <select id="sort">
+      <option value="date">Nieuwste eerst</option>
+      <option value="crit">Kritiek eerst</option>
+      <option value="source">Op bron</option>
+    </select>
+    <label class="chip" style="cursor:pointer"><input type="checkbox" id="critonly" style="accent-color:var(--crit)"> Alleen kritiek</label>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="quicklinks">
+    <span style="font-size:11.5px;color:var(--muted);align-self:center">Snelkoppelingen:</span>
+    <a class="ql" href="https://cvecrowd.com/" target="_blank" rel="noopener">CVE Crowd &#8599;</a>
+    <a class="ql" href="https://cvefeed.io/" target="_blank" rel="noopener">CVEFeed &#8599;</a>
+    <a class="ql" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank" rel="noopener">CISA KEV &#8599;</a>
+    <a class="ql" href="https://advisories.ncsc.nl/" target="_blank" rel="noopener">NCSC Advisories &#8599;</a>
+  </div>
+  <div class="bannermsg" id="banner"></div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">
+    <div class="big">&#128269;</div>
+    <div>Geen artikelen gevonden voor deze filters.</div>
+  </div>
+</main>
+
+<footer>
+  Dashboard ververst automatisch &middot; Bronnen worden client-side opgehaald via een open RSS-proxy.<br>
+  Klik op een titel om het volledige artikel bij de bron te openen.
+</footer>
+
+<script>
+/* ---------- Bronnen ---------- */
+const FEEDS = [
+  {name:'Security.NL',       url:'https://www.security.nl/rss/headlines.xml',    site:'https://www.security.nl',       color:'#e63946', lang:'nl'},
+  {name:'BleepingComputer',  url:'https://www.bleepingcomputer.com/feed/',       site:'https://www.bleepingcomputer.com',color:'#ff8c00'},
+  {name:'The Hacker News',   url:'https://feeds.feedburner.com/TheHackersNews',  site:'https://thehackernews.com',     color:'#3ea6ff'},
+  {name:'Krebs on Security', url:'https://krebsonsecurity.com/feed/',            site:'https://krebsonsecurity.com',   color:'#a55eea'},
+  {name:'Dark Reading',      url:'https://www.darkreading.com/rss.xml',          site:'https://www.darkreading.com',   color:'#2ed573'},
+  {name:'SecurityWeek',      url:'https://www.securityweek.com/feed/',           site:'https://www.securityweek.com',  color:'#feca57'},
+  {name:'The Record',        url:'https://therecord.media/feed/',                site:'https://therecord.media',       color:'#1dd1a1'},
+  {name:'NCSC-NL Nieuws',    url:'https://feeds.ncsc.nl/nieuws.rss',             site:'https://www.ncsc.nl',           color:'#54a0ff', lang:'nl'},
+  {name:'NCSC-NL Advisories',url:'https://advisories.ncsc.nl/rss/advisories',    site:'https://advisories.ncsc.nl',    color:'#5f27cd', lang:'nl'},
+];
+
+/* CORS-proxies (fallback-keten). json:true betekent dat het antwoord
+   in een JSON-omhulsel zit ({contents:"..."}) en eerst uitgepakt moet worden. */
+const PROXIES = [
+  {build:u=>'https://api.allorigins.win/get?url=' + encodeURIComponent(u),     json:true},
+  {build:u=>'https://corsproxy.io/?url=' + encodeURIComponent(u),              json:false},
+  {build:u=>'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u),json:false},
+  {build:u=>'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),     json:false},
+  {build:u=>'https://thingproxy.freeboard.io/fetch/' + u,                      json:false},
+];
+
+const CRIT_WORDS = ['ransomware','zero-day','zeroday','zero day','actively exploited','exploited in the wild',
+  'actief misbruik','kritiek','critical','rce','remote code execution','datalek','data breach','0-day',
+  'cve-','privilege escalation','backdoor','supply chain','supplychain','wormable','unauthenticated'];
+
+const grid=document.getElementById('grid'), emptyEl=document.getElementById('empty'),
+  chipsEl=document.getElementById('chips'), banner=document.getElementById('banner');
+let ALL=[], activeSource='all', timer=null, remaining=0;
+const LAST_VISIT = +(localStorage.getItem('cyber_lastvisit')||0);
+
+/* ---------- Ophalen ---------- */
+async function fetchFeed(feed){
+  for(const proxy of PROXIES){
+    try{
+      const res = await fetch(proxy.build(feed.url),{cache:'no-store'});
+      if(!res.ok) continue;
+      let txt = await res.text();
+      if(proxy.json){
+        try{ txt = (JSON.parse(txt).contents) || ''; }catch(e){ continue; }
+      }
+      // Sla lege antwoorden en Cloudflare/anti-bot-uitdagingspagina's over
+      if(!txt || /just a moment|attention required|cf-browser-verification|enable javascript and cookies/i.test(txt)) continue;
+      const items = parseFeed(txt, feed);
+      if(items.length) return items;
+    }catch(e){/* probeer volgende proxy */}
+  }
+  return [];
+}
+
+function parseFeed(xmlText, feed){
+  const out=[];
+  let doc;
+  try{ doc = new DOMParser().parseFromString(xmlText,'text/xml'); }catch(e){ return out; }
+  if(doc.querySelector('parsererror')) return out;
+  const nodes = doc.querySelectorAll('item, entry');
+  nodes.forEach(n=>{
+    const get=t=>{const el=n.querySelector(t);return el?el.textContent.trim():'';};
+    let link = get('link');
+    const linkEl = n.querySelector('link');
+    if(!link && linkEl && linkEl.getAttribute('href')) link = linkEl.getAttribute('href');
+    const title = get('title');
+    if(!title) return;
+    let desc = get('description') || get('summary') || get('content');
+    desc = desc.replace(/<[^>]+>/g,' ').replace(/&[a-z]+;/gi,' ').replace(/\s+/g,' ').trim();
+    const dateStr = get('pubDate') || get('published') || get('updated') || get('dc\\:date');
+    const ts = dateStr ? Date.parse(dateStr) : Date.now();
+    out.push({title, link, desc:desc.slice(0,260), ts:isNaN(ts)?Date.now():ts, feed});
+  });
+  return out;
+}
+
+function isCrit(item){
+  const s=(item.title+' '+item.desc).toLowerCase();
+  return CRIT_WORDS.some(w=>s.includes(w));
+}
+
+async function loadAll(){
+  document.getElementById('livedot').style.background='var(--warn)';
+  grid.innerHTML = Array(6).fill('<div class="skeleton"></div>').join('');
+  const results = await Promise.all(FEEDS.map(fetchFeed));
+  let items=[]; const failed=[];
+  results.forEach((arr,i)=>{ if(arr.length) items=items.concat(arr); else failed.push(FEEDS[i].name); });
+  items.forEach(it=>{ it.crit=isCrit(it); it.isNew = it.ts > LAST_VISIT; });
+  ALL = items;
+  document.getElementById('updated').textContent = new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('livedot').style.background = failed.length===FEEDS.length ? 'var(--crit)' : 'var(--ok)';
+  if(failed.length){
+    banner.classList.add('show');
+    banner.innerHTML = '&#9888; Tijdelijk geen data van: <b>'+failed.join(', ')+'</b>. '+
+      'De overige bronnen zijn geladen. Probeer "Nu verversen" als dit aanhoudt.';
+  } else { banner.classList.remove('show'); }
+  buildChips(); render();
+  localStorage.setItem('cyber_lastvisit', Date.now());
+  resetTimer();
+}
+
+/* ---------- Filters / chips ---------- */
+function buildChips(){
+  const counts={}; ALL.forEach(it=>counts[it.feed.name]=(counts[it.feed.name]||0)+1);
+  let html = `<div class="chip ${activeSource==='all'?'active':''}" data-s="all">
+      <span class="cdot" style="background:#3ea6ff"></span>Alle bronnen <span class="cnt">${ALL.length}</span></div>`;
+  FEEDS.forEach(f=>{
+    html += `<div class="chip ${activeSource===f.name?'active':''}" data-s="${f.name}">
+      <span class="cdot" style="background:${f.color}"></span>${f.name} <span class="cnt">${counts[f.name]||0}</span></div>`;
+  });
+  chipsEl.innerHTML=html;
+  chipsEl.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{activeSource=c.dataset.s;buildChips();render();});
+}
+
+function render(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  const critOnly=document.getElementById('critonly').checked;
+  const sort=document.getElementById('sort').value;
+  let list=ALL.filter(it=>{
+    if(activeSource!=='all' && it.feed.name!==activeSource) return false;
+    if(critOnly && !it.crit) return false;
+    if(q && !(it.title+' '+it.desc).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  if(sort==='date') list.sort((a,b)=>b.ts-a.ts);
+  else if(sort==='crit') list.sort((a,b)=> (b.crit-a.crit) || (b.ts-a.ts));
+  else if(sort==='source') list.sort((a,b)=> a.feed.name.localeCompare(b.feed.name) || b.ts-a.ts);
+
+  document.getElementById('itemcount').textContent=list.length;
+  emptyEl.style.display = list.length? 'none':'block';
+  grid.style.display = list.length? 'grid':'none';
+  grid.innerHTML = list.map(card).join('');
+}
+
+function timeAgo(ts){
+  const m=Math.floor((Date.now()-ts)/60000);
+  if(m<1) return 'zojuist'; if(m<60) return m+' min geleden';
+  const h=Math.floor(m/60); if(h<24) return h+' uur geleden';
+  const d=Math.floor(h/24); return d+' dag'+(d>1?'en':'')+' geleden';
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function card(it){
+  const tags=[];
+  if(it.crit) tags.push('<span class="tag crit">&#9888; KRITIEK</span>');
+  if(it.isNew) tags.push('<span class="tag new">&#10024; NIEUW</span>');
+  const cve=(it.title+' '+it.desc).match(/CVE-\d{4}-\d{3,7}/i);
+  if(cve) tags.push('<span class="tag">'+cve[0].toUpperCase()+'</span>');
+  return `<article class="card ${it.crit?'crit':''}">
+    <div class="bar" style="background:${it.feed.color}"></div>
+    <div class="meta">
+      <span class="src" style="background:${it.feed.color}">${esc(it.feed.name)}</span>
+      <span>&#128337; ${timeAgo(it.ts)}</span>
+    </div>
+    <h3 class="ttl"><a href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.title)}</a></h3>
+    ${it.desc?`<p class="desc">${esc(it.desc)}</p>`:''}
+    <div class="tags">${tags.join('')}</div>
+  </article>`;
+}
+
+/* ---------- Timer ---------- */
+function resetTimer(){
+  clearInterval(timer);
+  remaining = +document.getElementById('interval').value;
+  timer=setInterval(()=>{
+    remaining--;
+    const m=Math.floor(remaining/60), s=remaining%60;
+    document.getElementById('countdown').textContent=`${m}:${String(s).padStart(2,'0')}`;
+    if(remaining<=0) loadAll();
+  },1000);
+}
+
+/* ---------- Events ---------- */
+document.getElementById('refresh').onclick=loadAll;
+document.getElementById('search').oninput=render;
+document.getElementById('sort').onchange=render;
+document.getElementById('critonly').onchange=render;
+document.getElementById('interval').onchange=resetTimer;
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) loadAll(); });
+
+loadAll();
+</script>
+</body>
+</html>
